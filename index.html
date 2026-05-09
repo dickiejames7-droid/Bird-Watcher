@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bird Watcher</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2d5a1b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bird Watcher">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #1a3a0a;
+    --green-mid: #2d5a1b;
+    --green-light: #4a8a2e;
+    --green-pale: #c8e6b0;
+    --green-mist: #eaf5e0;
+    --amber: #d4820a;
+    --amber-light: #f5c842;
+    --brown: #5c3a1e;
+    --cream: #faf6ee;
+    --white: #ffffff;
+    --shadow: rgba(26,58,10,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .leaf-border-top, .leaf-border-bottom {
+    width: 100%;
+    display: block;
+    position: relative;
+    z-index: 2;
+  }
+
+  .screen {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+  .screen.active { display: flex; }
+
+  #home {
+    background: linear-gradient(160deg, #1a3a0a 0%, #2d5a1b 50%, #4a8a2e 100%);
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #home::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(ellipse at 20% 80%, rgba(74,138,46,0.3) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(212,130,10,0.2) 0%, transparent 50%);
+  }
+
+  .home-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .home-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: var(--cream);
+    text-align: center;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    line-height: 1.2;
+  }
+
+  .home-subtitle {
+    color: var(--green-pale);
+    font-size: 1.1rem;
+    text-align: center;
+    opacity: 0.9;
+  }
+
+  .big-bird-btn {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #f5c842, #d4820a);
+    border: 6px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 0 3px rgba(245,200,66,0.3), inset 0 2px 0 rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .big-bird-btn:hover {
+    transform: scale(1.06);
+    box-shadow: 0 12px 50px rgba(0,0,0,0.4), 0 0 0 5px rgba(245,200,66,0.4), inset 0 2px 0 rgba(255,255,255,0.2);
+  }
+
+  .big-bird-btn:active { transform: scale(0.97); }
+
+  .big-bird-btn svg {
+    width: 110px;
+    height: 110px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+  }
+
+  .btn-label {
+    color: var(--green-pale);
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: -0.5rem;
+  }
+
+  .leaf-deco {
+    position: absolute;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .nav-bar {
+    background: var(--green-dark);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 12px var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-back {
+    background: none;
+    border: none;
+    color: var(--green-pale);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .nav-back:hover { color: var(--amber-light); }
+
+  .nav-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--cream);
+    font-size: 1.3rem;
+    flex: 1;
+  }
+
+  .nav-count {
+    background: var(--amber);
+    color: var(--cream);
+    border-radius: 20px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .leaf-strip {
+    width: 100%;
+    height: 28px;
+    background: var(--green-dark);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #form-screen {
+    background: var(--cream);
+  }
+
+  .form-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
+    padding-bottom: 6rem;
+  }
+
+  .form-hero {
+    background: var(--green-dark);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .form-hero svg { flex-shrink: 0; }
+
+  .form-hero-text h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--cream);
+    font-size: 1.3rem;
+  }
+
+  .form-hero-text p {
+    color: var(--green-pale);
+    font-size: 0.88rem;
+    margin-top: 0.2rem;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--green-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  label span.icon { font-size: 1rem; }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--green-pale);
+    border-radius: 0.6rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    color: var(--green-dark);
+    background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--green-light);
+    box-shadow: 0 0 0 3px rgba(74,138,46,0.15);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .photo-upload-area {
+    border: 2.5px dashed var(--green-pale);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--white);
+    position: relative;
+  }
+
+  .photo-upload-area:hover {
+    border-color: var(--green-light);
+    background: var(--green-mist);
+  }
+
+  .photo-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+  }
+
+  .photo-preview {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 0.6rem;
+    display: none;
+    margin: 0 auto;
+    object-fit: cover;
+  }
+
+  .upload-hint {
+    color: var(--green-light);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem 1.5rem;
+    background: var(--cream);
+    border-top: 2px solid var(--green-pale);
+    display: flex;
+    gap: 1rem;
+    z-index: 50;
+  }
+
+  .btn-primary {
+    flex: 1;
+    padding: 0.9rem;
+    background: var(--green-mid);
+    color: var(--white);
+    border: none;
+    border-radius: 0.7rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.04em;
+  }
+
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-cancel {
+    padding: 0.9rem 1.4rem;
+    background: none;
+    color: var(--green-mid);
+    border: 2px solid var(--green-pale);
+    border-radius: 0.7rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-cancel:hover { background: var(--green-mist); }
+
+  #list-screen { background: var(--cream); }
+
+  .list-body {
+    padding: 1rem 1.5rem;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
+    padding-bottom: 2rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--green-light);
+  }
+
+  .empty-state .empty-icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
+  .empty-state p { font-size: 1.1rem; line-height: 1.6; }
+
+  .alpha-group { margin-bottom: 1.5rem; }
+
+  .alpha-letter {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--green-dark);
+    font-weight: 700;
+    border-bottom: 2px solid var(--green-pale);
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .bird-card {
+    background: var(--white);
+    border: 2px solid var(--green-pale);
+    border-radius: 0.8rem;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+  }
+
+  .bird-card:hover {
+    border-color: var(--green-light);
+    box-shadow: 0 4px 16px rgba(45,90,27,0.12);
+    transform: translateY(-1px);
+  }
+
+  .bird-card:active { transform: scale(0.99); }
+
+  .bird-card-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--green-mist);
+    border: 2px solid var(--green-pale);
+    object-fit: cover;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bird-card-thumb img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .bird-card-info { flex: 1; min-width: 0; }
+
+  .bird-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--green-dark);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bird-card-meta {
+    font-size: 0.82rem;
+    color: var(--green-light);
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bird-card-arrow {
+    color: var(--green-pale);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,28,4,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-card {
+    background: var(--cream);
+    border-radius: 1.2rem;
+    max-width: 540px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .modal-header {
+    background: var(--green-dark);
+    border-radius: 1.2rem 1.2rem 0 0;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .modal-bird-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .modal-title-block { flex: 1; }
+
+  .modal-bird-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--cream);
+    line-height: 1.2;
+  }
+
+  .modal-date {
+    color: var(--green-pale);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: var(--cream);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+  .modal-photo {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .detail-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+
+  .detail-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: var(--green-light);
+  }
+
+  .detail-value {
+    font-size: 0.98rem;
+    color: var(--green-dark);
+    line-height: 1.5;
+  }
+
+  .modal-delete-btn {
+    margin: 0 1.5rem 1.5rem;
+    padding: 0.7rem;
+    background: none;
+    border: 2px solid #e8c5c5;
+    border-radius: 0.6rem;
+    color: #c0392b;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: calc(100% - 3rem);
+  }
+
+  .modal-delete-btn:hover { background: #fff0f0; }
+
+  .leaf-footer {
+    text-align: center;
+    padding: 1rem;
+    color: var(--green-light);
+    font-size: 0.8rem;
+    opacity: 0.6;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green-dark);
+    color: var(--cream);
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .colour-swatches {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .colour-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+
+  .colour-swatch:hover { transform: scale(1.15); }
+  .colour-swatch.selected { border-color: var(--green-dark); }
+
+  .colour-swatch.selected::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  .colour-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .colour-text-input { flex: 1; }
+
+  @keyframes sway { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="home" class="screen active">
+
+  <svg class="leaf-deco" style="top:-20px;left:-40px;width:220px;transform:rotate(20deg)" viewBox="0 0 200 200" fill="none">
+    <path d="M20 180 Q60 80 180 20 Q120 120 20 180Z" fill="white"/>
+    <path d="M20 180 L180 20" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <path d="M20 180 Q80 130 130 60" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+    <path d="M20 180 Q90 140 160 80" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  </svg>
+  <svg class="leaf-deco" style="bottom:-30px;right:-30px;width:260px;transform:rotate(200deg)" viewBox="0 0 200 200" fill="none">
+    <path d="M20 180 Q60 80 180 20 Q120 120 20 180Z" fill="white"/>
+    <path d="M20 180 L180 20" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  </svg>
+  <svg class="leaf-deco" style="top:30%;left:-20px;width:140px;transform:rotate(90deg)" viewBox="0 0 200 200" fill="none">
+    <path d="M20 180 Q60 80 180 20 Q120 120 20 180Z" fill="white"/>
+  </svg>
+  <svg class="leaf-deco" style="top:20%;right:-10px;width:100px;transform:rotate(260deg)" viewBox="0 0 200 200" fill="none">
+    <path d="M20 180 Q60 80 180 20 Q120 120 20 180Z" fill="white"/>
+  </svg>
+
+  <div class="home-content">
+    <div>
+      <div class="home-title">🌿 Bird Watcher</div>
+      <div class="home-subtitle">Your nature explorer journal</div>
+    </div>
+
+    <button class="big-bird-btn" onclick="showForm()" aria-label="Log a new bird sighting">
+      <svg viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="55" cy="62" rx="26" ry="20" fill="#3a2000"/>
+        <circle cx="76" cy="46" r="14" fill="#3a2000"/>
+        <path d="M88 43 L100 46 L88 50Z" fill="#3a2000"/>
+        <path d="M29 65 Q10 72 8 62 Q14 68 29 63Z" fill="#3a2000"/>
+        <path d="M29 68 Q6 80 5 70 Q12 75 29 67Z" fill="#2a1800"/>
+        <path d="M40 50 Q55 44 72 48 Q58 58 40 58Z" fill="#5a3000"/>
+        <circle cx="80" cy="43" r="3" fill="white"/>
+        <circle cx="81" cy="43" r="1.5" fill="#1a1000"/>
+        <line x1="52" y1="80" x2="48" y2="95" stroke="#3a2000" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="60" y1="81" x2="57" y2="95" stroke="#3a2000" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="48" y1="95" x2="42" y2="98" stroke="#3a2000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="48" y1="95" x2="50" y2="100" stroke="#3a2000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="57" y1="95" x2="51" y2="98" stroke="#3a2000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="57" y1="95" x2="59" y2="100" stroke="#3a2000" stroke-width="2" stroke-linecap="round"/>
+        <path d="M30 98 Q55 94 85 97" stroke="#5c3a1e" stroke-width="4" stroke-linecap="round"/>
+        <path d="M30 98 Q18 102 10 98" stroke="#5c3a1e" stroke-width="4" stroke-linecap="round"/>
+        <path d="M20 96 Q16 88 12 92 Q18 90 20 96Z" fill="#4a8a2e"/>
+        <path d="M72 95 Q70 87 76 89 Q72 93 72 95Z" fill="#4a8a2e"/>
+      </svg>
+    </button>
+
+    <div class="btn-label">Tap to log a bird</div>
+
+    <button onclick="showList()" style="background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);color:var(--cream);padding:0.75rem 2rem;border-radius:2rem;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+      📋 My Bird List
+    </button>
+  </div>
+</div>
+
+<!-- FORM SCREEN -->
+<div id="form-screen" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="showHome()">←</button>
+    <span class="nav-title">Log a Bird</span>
+  </div>
+
+  <div class="form-body">
+    <div class="form-hero">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="rgba(255,255,255,0.1)"/>
+        <ellipse cx="24" cy="28" rx="11" ry="8" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="32" cy="20" r="6" fill="rgba(255,255,255,0.85)"/>
+        <path d="M37 18 L43 20 L37 23Z" fill="rgba(255,255,255,0.85)"/>
+        <path d="M13 29 Q6 32 5 27 Q9 30 13 28Z" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="34" cy="18" r="1.5" fill="#2d5a1b"/>
+      </svg>
+      <div class="form-hero-text">
+        <h2>New Bird Sighting!</h2>
+        <p>Fill in what you saw 🔭</p>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">📸</span> Photo of the Bird</label>
+      <div class="photo-upload-area" id="photoUploadArea">
+        <input type="file" accept="image/*" id="photoInput" onchange="handlePhoto(event)">
+        <img id="photoPreview" class="photo-preview" alt="Bird photo preview">
+        <div id="uploadHintBlock">
+          <span class="upload-icon">🦅</span>
+          <div class="upload-hint">Tap to add a photo</div>
+          <div style="color:#888;font-size:0.8rem;margin-top:0.3rem">from your camera or gallery</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">🐦</span> Type of Bird</label>
+      <input type="text" id="f-type" placeholder="e.g. Robin, Blue Tit, Sparrow…" autocomplete="off">
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">📍</span> Where did you see it?</label>
+      <input type="text" id="f-where" placeholder="e.g. garden, park, woodland…">
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">📅</span> When did you see it?</label>
+      <input type="date" id="f-date">
+      <input type="time" id="f-time" style="margin-top:0.5rem">
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">🔍</span> What was it doing?</label>
+      <textarea id="f-doing" placeholder="e.g. singing in a tree, eating berries, building a nest…"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">🎨</span> Colour</label>
+      <div class="colour-swatches" id="colourSwatches">
+        <div class="colour-swatch" style="background:#e53935" data-colour="Red" onclick="pickColour(this,'Red')"></div>
+        <div class="colour-swatch" style="background:#fb8c00" data-colour="Orange" onclick="pickColour(this,'Orange')"></div>
+        <div class="colour-swatch" style="background:#fdd835" data-colour="Yellow" onclick="pickColour(this,'Yellow')"></div>
+        <div class="colour-swatch" style="background:#43a047" data-colour="Green" onclick="pickColour(this,'Green')"></div>
+        <div class="colour-swatch" style="background:#1e88e5" data-colour="Blue" onclick="pickColour(this,'Blue')"></div>
+        <div class="colour-swatch" style="background:#8e24aa" data-colour="Purple" onclick="pickColour(this,'Purple')"></div>
+        <div class="colour-swatch" style="background:#6d4c41" data-colour="Brown" onclick="pickColour(this,'Brown')"></div>
+        <div class="colour-swatch" style="background:#212121" data-colour="Black" onclick="pickColour(this,'Black')"></div>
+        <div class="colour-swatch" style="background:#e0e0e0;border:1.5px solid #bbb" data-colour="White/Grey" onclick="pickColour(this,'White/Grey')"></div>
+      </div>
+      <div class="colour-input-row">
+        <input type="text" id="f-colour" class="colour-text-input" placeholder="or describe the colours…">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">🌱</span> What does it eat? (Diet)</label>
+      <select id="f-diet">
+        <option value="">— choose or guess —</option>
+        <option>Seeds &amp; grains</option>
+        <option>Insects &amp; bugs</option>
+        <option>Worms</option>
+        <option>Berries &amp; fruit</option>
+        <option>Nectar</option>
+        <option>Fish</option>
+        <option>Small animals</option>
+        <option>Nuts</option>
+        <option>Mixed / omnivore</option>
+        <option>Not sure yet</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label><span class="icon">✏️</span> Extra Notes</label>
+      <textarea id="f-notes" placeholder="Anything else interesting you noticed…"></textarea>
+    </div>
+  </div>
+
+  <div class="submit-bar">
+    <button class="btn-cancel" onclick="showHome()">Cancel</button>
+    <button class="btn-primary" onclick="saveBird()">🐦 Save Bird!</button>
+  </div>
+</div>
+
+<!-- LIST SCREEN -->
+<div id="list-screen" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="showHome()">←</button>
+    <span class="nav-title">My Birds</span>
+    <span class="nav-count" id="bird-count">0</span>
+  </div>
+
+  <svg width="100%" height="32" viewBox="0 0 400 32" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="400" height="32" fill="#1a3a0a"/>
+    <path d="M0 32 Q20 10 40 28 Q60 10 80 28 Q100 10 120 28 Q140 10 160 28 Q180 10 200 28 Q220 10 240 28 Q260 10 280 28 Q300 10 320 28 Q340 10 360 28 Q380 10 400 28 L400 32Z" fill="#faf6ee"/>
+  </svg>
+
+  <div class="list-body" id="birdList">
+    <div class="empty-state" id="emptyState">
+      <span class="empty-icon">🌿</span>
+      <p>No birds logged yet!<br>Tap the button on the home screen<br>to record your first sighting.</p>
+    </div>
+  </div>
+
+  <svg width="100%" height="32" viewBox="0 0 400 32" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-top:auto">
+    <rect width="400" height="32" fill="#1a3a0a"/>
+    <path d="M0 4 Q20 24 40 6 Q60 24 80 6 Q100 24 120 6 Q140 24 160 6 Q180 24 200 6 Q220 24 240 6 Q260 24 280 6 Q300 24 320 6 Q340 24 360 6 Q380 24 400 6 L400 0 L0 0Z" fill="#faf6ee"/>
+  </svg>
+  <div style="background:#1a3a0a;padding:0.5rem;text-align:center;color:rgba(200,230,176,0.5);font-size:0.75rem">🌿 Bird Watcher Journal 🌿</div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-card" id="modalCard">
+    <div class="modal-header">
+      <div class="modal-bird-icon">
+        <svg width="32" height="32" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <ellipse cx="22" cy="28" rx="11" ry="8" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="32" cy="20" r="6" fill="rgba(255,255,255,0.85)"/>
+          <path d="M37 18 L43 20 L37 23Z" fill="rgba(255,255,255,0.85)"/>
+          <path d="M11 29 Q4 32 3 27 Q8 30 11 28Z" fill="rgba(255,255,255,0.7)"/>
+          <circle cx="34" cy="18" r="1.5" fill="#2d5a1b"/>
+        </svg>
+      </div>
+      <div class="modal-title-block">
+        <div class="modal-bird-name" id="modal-name">Robin</div>
+        <div class="modal-date" id="modal-date">Today</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <img id="modal-photo" class="modal-photo" alt="Bird photo" style="display:none">
+
+    <div class="modal-body">
+      <div class="detail-row" id="modal-row-where">
+        <span class="detail-icon">📍</span>
+        <div class="detail-content">
+          <div class="detail-label">Where seen</div>
+          <div class="detail-value" id="modal-where"></div>
+        </div>
+      </div>
+      <div class="detail-row" id="modal-row-time">
+        <span class="detail-icon">🕐</span>
+        <div class="detail-content">
+          <div class="detail-label">When</div>
+          <div class="detail-value" id="modal-time"></div>
+        </div>
+      </div>
+      <div class="detail-row" id="modal-row-doing">
+        <span class="detail-icon">🔍</span>
+        <div class="detail-content">
+          <div class="detail-label">What it was doing</div>
+          <div class="detail-value" id="modal-doing"></div>
+        </div>
+      </div>
+      <div class="detail-row" id="modal-row-colour">
+        <span class="detail-icon">🎨</span>
+        <div class="detail-content">
+          <div class="detail-label">Colour</div>
+          <div class="detail-value" id="modal-colour"></div>
+        </div>
+      </div>
+      <div class="detail-row" id="modal-row-diet">
+        <span class="detail-icon">🌱</span>
+        <div class="detail-content">
+          <div class="detail-label">Diet</div>
+          <div class="detail-value" id="modal-diet"></div>
+        </div>
+      </div>
+      <div class="detail-row" id="modal-row-notes">
+        <span class="detail-icon">✏️</span>
+        <div class="detail-content">
+          <div class="detail-label">Notes</div>
+          <div class="detail-value" id="modal-notes"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="modal-delete-btn" id="modal-delete-btn">🗑 Delete this sighting</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let birds = [];
+let selectedColour = '';
+let currentModalId = null;
+
+function loadData() {
+  try {
+    const stored = localStorage.getItem('birdwatcher_birds');
+    if (stored) birds = JSON.parse(stored);
+  } catch(e) { birds = []; }
+}
+
+function saveData() {
+  localStorage.setItem('birdwatcher_birds', JSON.stringify(birds));
+}
+
+function showHome() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('home').classList.add('active');
+}
+
+function showForm() {
+  resetForm();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('form-screen').classList.add('active');
+  const today = new Date();
+  document.getElementById('f-date').value = today.toISOString().split('T')[0];
+  const hh = String(today.getHours()).padStart(2,'0');
+  const mm = String(today.getMinutes()).padStart(2,'0');
+  document.getElementById('f-time').value = hh + ':' + mm;
+}
+
+function showList() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('list-screen').classList.add('active');
+  renderList();
+}
+
+function resetForm() {
+  ['f-type','f-where','f-date','f-time','f-doing','f-colour','f-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-diet').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('uploadHintBlock').style.display = '';
+  document.getElementById('photoInput').value = '';
+  selectedColour = '';
+  document.querySelectorAll('.colour-swatch').forEach(s => s.classList.remove('selected'));
+}
+
+let photoData = null;
+
+function handlePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    photoData = e.target.result;
+    const preview = document.getElementById('photoPreview');
+    preview.src = photoData;
+    preview.style.display = 'block';
+    document.getElementById('uploadHintBlock').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function pickColour(el, colour) {
+  document.querySelectorAll('.colour-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColour = colour;
+  document.getElementById('f-colour').value = colour;
+}
+
+function saveBird() {
+  const type = document.getElementById('f-type').value.trim();
+  if (!type) {
+    showToast('Please enter the type of bird! 🐦');
+    document.getElementById('f-type').focus();
+    return;
+  }
+  const bird = {
+    id: Date.now(),
+    type: type,
+    where: document.getElementById('f-where').value.trim(),
+    date: document.getElementById('f-date').value,
+    time: document.getElementById('f-time').value,
+    doing: document.getElementById('f-doing').value.trim(),
+    colour: document.getElementById('f-colour').value.trim(),
+    diet: document.getElementById('f-diet').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    photo: photoData || null,
+  };
+  birds.push(bird);
+  photoData = null;
+  saveData();
+  showToast('🎉 ' + type + ' saved!');
+  setTimeout(() => showList(), 700);
+}
+
+function renderList() {
+  const container = document.getElementById('birdList');
+  const countEl = document.getElementById('bird-count');
+  countEl.textContent = birds.length;
+  if (birds.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span class="empty-icon">🌿</span><p>No birds logged yet!<br>Tap the button on the home screen<br>to record your first sighting.</p></div>`;
+    return;
+  }
+  const sorted = [...birds].sort((a,b) => a.type.localeCompare(b.type));
+  const groups = {};
+  sorted.forEach(b => {
+    const letter = b.type[0].toUpperCase();
+    if (!groups[letter]) groups[letter] = [];
+    groups[letter].push(b);
+  });
+  let html = '';
+  Object.keys(groups).sort().forEach(letter => {
+    html += `<div class="alpha-group"><div class="alpha-letter">${letter}</div>`;
+    groups[letter].forEach(bird => {
+      const dateStr = bird.date ? formatDate(bird.date) : '';
+      const thumb = bird.photo
+        ? `<div class="bird-card-thumb"><img src="${bird.photo}" alt=""></div>`
+        : `<div class="bird-card-thumb"><svg width="28" height="28" viewBox="0 0 48 48" fill="none" aria-hidden="true"><ellipse cx="22" cy="28" rx="11" ry="8" fill="#c8e6b0"/><circle cx="32" cy="20" r="6" fill="#c8e6b0"/><path d="M37 18 L43 20 L37 23Z" fill="#c8e6b0"/></svg></div>`;
+      html += `<div class="bird-card" onclick="showDetail(${bird.id})">${thumb}<div class="bird-card-info"><div class="bird-card-name">${escHtml(bird.type)}</div><div class="bird-card-meta">${dateStr}${bird.where ? ' · ' + escHtml(bird.where) : ''}</div></div><div class="bird-card-arrow">›</div></div>`;
+    });
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function showDetail(id) {
+  const bird = birds.find(b => b.id === id);
+  if (!bird) return;
+  currentModalId = id;
+  document.getElementById('modal-name').textContent = bird.type;
+  document.getElementById('modal-date').textContent = bird.date ? formatDate(bird.date) + (bird.time ? ' at ' + formatTime(bird.time) : '') : '';
+  const photo = document.getElementById('modal-photo');
+  if (bird.photo) { photo.src = bird.photo; photo.style.display = 'block'; }
+  else { photo.style.display = 'none'; }
+  setModalRow('where', bird.where);
+  setModalRow('doing', bird.doing);
+  setModalRow('colour', bird.colour);
+  setModalRow('diet', bird.diet);
+  setModalRow('notes', bird.notes);
+  let timeVal = '';
+  if (bird.date) timeVal += formatDate(bird.date);
+  if (bird.time) timeVal += (timeVal ? ' at ' : '') + formatTime(bird.time);
+  setModalRow('time', timeVal);
+  document.getElementById('modal-delete-btn').onclick = () => deleteBird(id);
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function setModalRow(key, val) {
+  const row = document.getElementById('modal-row-' + key);
+  const valEl = document.getElementById('modal-' + key);
+  if (val && val.trim && val.trim()) {
+    valEl.textContent = val;
+    row.style.display = 'flex';
+  } else if (val && !val.trim) {
+    valEl.textContent = val;
+    row.style.display = 'flex';
+  } else {
+    row.style.display = 'none';
+  }
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  currentModalId = null;
+}
+
+function deleteBird(id) {
+  if (!confirm('Delete this bird sighting?')) return;
+  birds = birds.filter(b => b.id !== id);
+  saveData();
+  closeModal();
+  renderList();
+  showToast('Sighting deleted');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'pm' : 'am';
+  const h12 = hour % 12 || 12;
+  return h12 + ':' + m + ' ' + ampm;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+loadData();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
