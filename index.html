@@ -183,9 +183,7 @@
     overflow: hidden;
   }
 
-  #form-screen {
-    background: var(--cream);
-  }
+  #form-screen { background: var(--cream); }
 
   .form-body {
     padding: 1.5rem;
@@ -594,6 +592,21 @@
 
   .modal-delete-btn:hover { background: #fff0f0; }
 
+  .modal-edit-btn {
+    flex: 1;
+    padding: 0.7rem;
+    background: none;
+    border: 2px solid var(--green-pale);
+    border-radius: 0.6rem;
+    color: var(--green-mid);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .modal-edit-btn:hover { background: var(--green-mist); }
+
   .leaf-footer {
     text-align: center;
     padding: 1rem;
@@ -925,7 +938,10 @@
       </div>
     </div>
 
-    <button class="modal-delete-btn" id="modal-delete-btn">🗑 Delete this sighting</button>
+    <div style="display:flex;gap:0.75rem;margin:0 1.5rem 1.5rem;">
+      <button class="modal-edit-btn" id="modal-edit-btn">✏️ Edit</button>
+      <button class="modal-delete-btn" id="modal-delete-btn" style="margin:0;width:auto;flex:1;">🗑 Delete</button>
+    </div>
   </div>
 </div>
 
@@ -936,6 +952,7 @@
 let birds = [];
 let selectedColour = '';
 let currentModalId = null;
+let editingId = null;
 
 function loadData() {
   try {
@@ -949,6 +966,9 @@ function saveData() {
 }
 
 function showHome() {
+  editingId = null;
+  document.querySelector('#form-screen .nav-title').textContent = 'Log a Bird';
+  document.querySelector('.btn-primary').textContent = '🐦 Save Bird!';
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('home').classList.add('active');
 }
@@ -1024,11 +1044,23 @@ function saveBird() {
     notes: document.getElementById('f-notes').value.trim(),
     photo: photoData || null,
   };
-  birds.push(bird);
-  photoData = null;
-  saveData();
-  showToast('🎉 ' + type + ' saved!');
-  setTimeout(() => showList(), 700);
+  if (editingId !== null) {
+    const idx = birds.findIndex(b => b.id === editingId);
+    if (idx !== -1) { bird.id = editingId; birds[idx] = bird; }
+    editingId = null;
+    photoData = null;
+    saveData();
+    document.querySelector('#form-screen .nav-title').textContent = 'Log a Bird';
+    document.querySelector('.btn-primary').textContent = '🐦 Save Bird!';
+    showToast('✅ ' + type + ' updated!');
+    setTimeout(() => showList(), 700);
+  } else {
+    birds.push(bird);
+    photoData = null;
+    saveData();
+    showToast('🎉 ' + type + ' saved!');
+    setTimeout(() => showList(), 700);
+  }
 }
 
 function renderList() {
@@ -1080,6 +1112,7 @@ function showDetail(id) {
   if (bird.time) timeVal += (timeVal ? ' at ' : '') + formatTime(bird.time);
   setModalRow('time', timeVal);
   document.getElementById('modal-delete-btn').onclick = () => deleteBird(id);
+  document.getElementById('modal-edit-btn').onclick = () => editBird(id);
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -1087,14 +1120,42 @@ function setModalRow(key, val) {
   const row = document.getElementById('modal-row-' + key);
   const valEl = document.getElementById('modal-' + key);
   if (val && val.trim && val.trim()) {
-    valEl.textContent = val;
-    row.style.display = 'flex';
+    valEl.textContent = val; row.style.display = 'flex';
   } else if (val && !val.trim) {
-    valEl.textContent = val;
-    row.style.display = 'flex';
+    valEl.textContent = val; row.style.display = 'flex';
   } else {
     row.style.display = 'none';
   }
+}
+
+function editBird(id) {
+  const bird = birds.find(b => b.id === id);
+  if (!bird) return;
+  closeModal();
+  resetForm();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('form-screen').classList.add('active');
+  document.getElementById('f-type').value = bird.type || '';
+  document.getElementById('f-where').value = bird.where || '';
+  document.getElementById('f-date').value = bird.date || '';
+  document.getElementById('f-time').value = bird.time || '';
+  document.getElementById('f-doing').value = bird.doing || '';
+  document.getElementById('f-colour').value = bird.colour || '';
+  document.getElementById('f-diet').value = bird.diet || '';
+  document.getElementById('f-notes').value = bird.notes || '';
+  if (bird.photo) {
+    photoData = bird.photo;
+    const preview = document.getElementById('photoPreview');
+    preview.src = bird.photo;
+    preview.style.display = 'block';
+    document.getElementById('uploadHintBlock').style.display = 'none';
+  }
+  document.querySelectorAll('.colour-swatch').forEach(s => {
+    if (s.dataset.colour === bird.colour) s.classList.add('selected');
+  });
+  document.querySelector('#form-screen .nav-title').textContent = 'Edit Bird';
+  document.querySelector('.btn-primary').textContent = '💾 Save Changes';
+  editingId = id;
 }
 
 function closeModal() {
